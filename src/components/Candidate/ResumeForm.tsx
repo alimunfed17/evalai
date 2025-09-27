@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +18,11 @@ import {
 import { Input } from "../ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
+import { parseResume } from "@/lib/parseResume";
+
+// ----------------------
+// Validation Schema
+// ----------------------
 const formSchema = z.object({
   resume: z
     .custom<FileList>(
@@ -37,7 +43,14 @@ const formSchema = z.object({
 
 type ResumeFormValues = z.infer<typeof formSchema>;
 
+// ----------------------
+// Component
+// ----------------------
 export default function ResumeForm() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [resumeText, setResumeText] = useState<string | null>(null);
+
   const form = useForm<ResumeFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -45,12 +58,25 @@ export default function ResumeForm() {
     },
   });
 
-  const onSubmit = (data: ResumeFormValues) => {
+  const onSubmit = async (data: ResumeFormValues) => {
     const file = data.resume[0];
+    setLoading(true);
+    setError(null);
+    setResumeText(null);
+
+    try {
+      const text = await parseResume(file);
+      setResumeText(text);
+    } catch (err) {
+      console.error("Resume parsing error:", err);
+      setError("Failed to parse resume. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="flex justify-center items-center h-full">
+    <div className="flex justify-center items-center gap-10 bg-gray-50 p-6">
       <Card className="w-full max-w-lg shadow-xl rounded-2xl">
         <CardHeader>
           <CardTitle className="text-2xl font-semibold text-center">
@@ -90,14 +116,28 @@ export default function ResumeForm() {
 
               <Button
                 type="submit"
-                className="w-full text-lg py-5 rounded-lg bg-blue-300 hover:bg-blue-500 hover:text-white"
+                disabled={loading}
+                className="w-full text-lg py-5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white"
               >
-                Upload
+                {loading ? "Uploading..." : "Upload"}
               </Button>
+
+              {error && (
+                <p className="text-red-500 text-sm text-center">{error}</p>
+              )}
             </form>
           </Form>
         </CardContent>
       </Card>
+
+      {/* {resumeText && (
+        <div className="mt-6 w-full max-w-2xl bg-white shadow-lg rounded-xl p-4">
+          <h2 className="text-lg font-semibold mb-2">Extracted Resume Text</h2>
+          <pre className="whitespace-pre-wrap text-sm text-gray-700 max-h-96 overflow-y-auto">
+            {resumeText}
+          </pre>
+        </div>
+      )} */}
     </div>
   );
 }
