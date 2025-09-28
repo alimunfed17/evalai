@@ -19,6 +19,7 @@ import { Input } from "../ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 import { parseResume } from "@/lib/parseResume";
+import { saveResume, getResumes } from "@/lib/db";
 
 // ----------------------
 // Validation Schema
@@ -67,6 +68,7 @@ export default function ResumeForm() {
     try {
       const text = await parseResume(file);
       setResumeText(text);
+      await saveResume(text);
     } catch (err) {
       console.error("Resume parsing error:", err);
       setError("Failed to parse resume. Please try again.");
