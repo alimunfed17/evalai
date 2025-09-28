@@ -19,7 +19,11 @@ import { Input } from "../ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 import { parseResume } from "@/lib/parseResume";
-import { saveResume, getResumes } from "@/lib/db";
+import { saveResume } from "@/lib/db";
+
+type ResumeFormProps = {
+  onSuccess?: (resumeText: string) => void;
+};
 
 // ----------------------
 // Validation Schema
@@ -47,10 +51,11 @@ type ResumeFormValues = z.infer<typeof formSchema>;
 // ----------------------
 // Component
 // ----------------------
-export default function ResumeForm() {
+export default function ResumeForm({ onSuccess }: ResumeFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resumeText, setResumeText] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const form = useForm<ResumeFormValues>({
     resolver: zodResolver(formSchema),
@@ -69,6 +74,7 @@ export default function ResumeForm() {
       const text = await parseResume(file);
       setResumeText(text);
       await saveResume(text);
+      if (onSuccess) onSuccess(text);
     } catch (err) {
       console.error("Resume parsing error:", err);
       setError("Failed to parse resume. Please try again.");
@@ -131,15 +137,6 @@ export default function ResumeForm() {
           </Form>
         </CardContent>
       </Card>
-
-      {/* {resumeText && (
-        <div className="mt-6 w-full max-w-2xl bg-white shadow-lg rounded-xl p-4">
-          <h2 className="text-lg font-semibold mb-2">Extracted Resume Text</h2>
-          <pre className="whitespace-pre-wrap text-sm text-gray-700 max-h-96 overflow-y-auto">
-            {resumeText}
-          </pre>
-        </div>
-      )} */}
     </div>
   );
 }
