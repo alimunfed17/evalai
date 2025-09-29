@@ -1,5 +1,9 @@
-export default function Interview() {
+import Interview from "@/components/Interview/Interview";
+
+export default function Page() {
     return (
-        <div>hi</div>
+        <main>
+            <Interview />
+        </main>
     );
 }
